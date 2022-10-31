@@ -1,3 +1,4 @@
+import { service } from '@loopback/core';
 import {
   Count,
   CountSchema,
@@ -17,13 +18,20 @@ import {
   requestBody,
   response,
 } from '@loopback/rest';
+import { __await } from 'tslib';
+import { keys } from '../config/key';
 import {Usuario} from '../models';
 import {UsuarioRepository} from '../repositories';
+import { AutenticacionService } from '../services';
+const fetch=require("node-fetch");
+
 
 export class UsuarioController {
   constructor(
     @repository(UsuarioRepository)
     public usuarioRepository : UsuarioRepository,
+    @service(AutenticacionService)
+    public servicioAutenticacion:AutenticacionService
   ) {}
 
   @post('/usuarios')
@@ -44,7 +52,24 @@ export class UsuarioController {
     })
     usuario: Omit<Usuario, 'id'>,
   ): Promise<Usuario> {
-    return this.usuarioRepository.create(usuario);
+
+    let clave=this.servicioAutenticacion.GenerarPassword();
+    let claveCifrada=this.servicioAutenticacion.EncriptarPassword(clave);
+    usuario.clave =claveCifrada;
+
+    let p= await this.usuarioRepository.create(usuario);
+    // notificacion usuario
+
+    let destino = p.Correo;
+    let asunto = "registro en la APP";
+    let mensaje = `Hola, ${p.PrimerNombre} su usuario de acceso a`
+    // estto de aqui abjo en con el spyder
+    fetch(`${keys.urlNotificaciones}/email?correo_destino=${destino}&asunto=${asunto}&contenido=${mensaje}`)
+    .then((data:any)=>{
+      console.log(data);
+    });
+
+    return p;
   }
 
   @get('/usuarios/count')
