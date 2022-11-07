@@ -9,6 +9,7 @@ import {RestApplication} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {MySequence} from './sequence';
+import { AuthenticationComponent } from '@loopback/authentication';
 
 export {ApplicationConfig};
 
@@ -40,5 +41,7 @@ export class Aap extends BootMixin(
         nested: true,
       },
     };
+    this.component(AuthenticationComponent);
+    
   }
 }
